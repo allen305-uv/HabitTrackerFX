@@ -1,8 +1,8 @@
 // src/HabitTracker.java
+import java.io.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.io.*;
-import java.util.Scanner;
 
 public class HabitTracker {
     private List<Habit> habits;
@@ -10,7 +10,7 @@ public class HabitTracker {
 
     public HabitTracker() {
         this.habits = new ArrayList<>();
-        loadData();
+        loadData(); // Auto-load on startup
     }
 
     public void addHabit(String name) {
@@ -24,8 +24,7 @@ public class HabitTracker {
     public void saveData() {
         try (PrintWriter writer = new PrintWriter(new FileWriter(FILE_NAME))) {
             for (Habit h : habits) {
-                // Format: Name,IsCompleted,Streak
-                writer.println(h.getName() + "," + h.isCompleted() + "," + h.getStreak());
+                writer.println(h.toDataString());
             }
         } catch (IOException e) {
             System.out.println("Error saving: " + e.getMessage());
@@ -36,27 +35,30 @@ public class HabitTracker {
         File file = new File(FILE_NAME);
         if (!file.exists()) return;
 
-        try (Scanner scanner = new Scanner(file)) {
-            while (scanner.hasNextLine()) {
-                String line = scanner.nextLine();
-                String[] parts = line.split(","); 
+        habits.clear(); 
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(";");
                 
                 if (parts.length >= 2) {
                     String name = parts[0];
-                    boolean isDone = Boolean.parseBoolean(parts[1]);
-                    
-                    Habit h = new Habit(name);
-                    if (isDone) h.markComplete(); // Sets isCompleted=true
-                    
-                    // NEW: Load streak if available (Backward compatibility)
-                    if (parts.length >= 3) {
-                        h.setStreak(Integer.parseInt(parts[2]));
+                    LocalDate startDate = LocalDate.parse(parts[1]);
+
+                    Habit h = new Habit(name, startDate);
+
+                    // Load History if exists
+                    if (parts.length > 2 && !parts[2].isEmpty()) {
+                        String[] dates = parts[2].split(",");
+                        for (String dateStr : dates) {
+                            h.setStatus(LocalDate.parse(dateStr), true);
+                        }
                     }
-                    
                     habits.add(h);
                 }
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             System.out.println("Error loading data.");
         }
     }

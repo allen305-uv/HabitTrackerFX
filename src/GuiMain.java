@@ -1,6 +1,7 @@
 // src/GuiMain.java
 import javax.swing.*;
 import java.awt.*;
+import java.time.LocalDate;
 import java.util.List;
 
 public class GuiMain {
@@ -10,14 +11,14 @@ public class GuiMain {
 
     public static void main(String[] args) {
         tracker = new HabitTracker();
-        // Default habits if empty
+        
         if (tracker.getHabits().isEmpty()) {
             tracker.addHabit("Code in Java");
             tracker.addHabit("Drink Water");
             tracker.addHabit("Exercise");
         }
 
-        JFrame frame = new JFrame("HabitTrackerFX - Ultimate Edition");
+        JFrame frame = new JFrame("HabitTrackerFX - Ultimate System");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(450, 600);
         frame.setLayout(new BorderLayout());
@@ -28,7 +29,7 @@ public class GuiMain {
         headerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         headerPanel.setBackground(new Color(40, 44, 52));
 
-        JLabel titleLabel = new JLabel("ULTIMATE TRACKER");
+        JLabel titleLabel = new JLabel("HABIT SYSTEM");
         titleLabel.setForeground(new Color(97, 218, 251));
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 26));
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -58,41 +59,40 @@ public class GuiMain {
     public static void refreshUI() {
         listPanel.removeAll();
         List<Habit> habits = tracker.getHabits();
-        int completed = 0;
+        LocalDate today = LocalDate.now();
+        int completedCount = 0;
 
         for (Habit h : habits) {
-            if (h.isCompleted()) completed++;
+            boolean isDoneToday = h.isCompletedOn(today);
+            if (isDoneToday) completedCount++;
 
             JPanel row = new JPanel(new BorderLayout());
             row.setMaximumSize(new Dimension(400, 40));
 
             JCheckBox checkBox = new JCheckBox(h.getName());
-            checkBox.setSelected(h.isCompleted());
+            checkBox.setSelected(isDoneToday);
             checkBox.setFont(new Font("Segoe UI", Font.PLAIN, 18));
             checkBox.setFocusable(false);
 
-            // --- THE GAMIFICATION LOGIC ---
-            // Instead of an Emoji, we use standard text
-            JLabel streakLabel = new JLabel("STREAK: " + h.getStreak() + " ");
+            // Dynamic Streak Display
+            int streak = h.getStreak();
+            JLabel streakLabel = new JLabel("STREAK: " + streak + " ");
             streakLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
             
-            // Dynamic Coloring (The "Heat Map")
-            if (h.getStreak() >= 10) {
-                streakLabel.setForeground(Color.RED);     // ON FIRE
-                streakLabel.setText("MASTER: " + h.getStreak() + " ");
-            } else if (h.getStreak() >= 3) {
-                streakLabel.setForeground(Color.ORANGE);  // Warming Up
+            if (streak >= 10) {
+                streakLabel.setForeground(Color.RED);
+                streakLabel.setText("MASTER: " + streak + " ");
+            } else if (streak >= 3) {
+                streakLabel.setForeground(Color.ORANGE);
             } else {
-                streakLabel.setForeground(Color.GRAY);    // Cold
+                streakLabel.setForeground(Color.GRAY);
             }
 
+            // ACTION: Uses the new setStatus with Today's Date
             checkBox.addActionListener(e -> {
-                if (checkBox.isSelected()) {
-                    h.markComplete();
-                    Toolkit.getDefaultToolkit().beep();
-                } else {
-                    h.reset();
-                }
+                h.setStatus(today, checkBox.isSelected());
+                if (checkBox.isSelected()) Toolkit.getDefaultToolkit().beep();
+                
                 tracker.saveData();
                 refreshUI();
             });
@@ -103,7 +103,7 @@ public class GuiMain {
             listPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         }
 
-        int percent = (habits.isEmpty()) ? 0 : (int)((double)completed / habits.size() * 100);
+        int percent = (habits.isEmpty()) ? 0 : (int)((double)completedCount / habits.size() * 100);
         progressBar.setValue(percent);
         listPanel.revalidate();
         listPanel.repaint();

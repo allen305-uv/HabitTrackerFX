@@ -95,4 +95,20 @@ public class Habit {
         }
         return sb.toString();
     }
+
+    // NEW: Get the last 5 days for the visual chain
+    // Index 0 = 4 days ago (Oldest)
+    // Index 4 = Today (Newest)
+    public boolean[] getLast5Days() {
+        boolean[] results = new boolean[5];
+        LocalDate today = LocalDate.now();
+        
+        for (int i = 0; i < 5; i++) {
+            // We count backwards: 0 days ago, 1 day ago...
+            // But we fill the array backwards so the Visual is Left-to-Right
+            LocalDate checkDate = today.minusDays(i);
+            results[4 - i] = isCompletedOn(checkDate);
+        }
+        return results;
+    }
 }

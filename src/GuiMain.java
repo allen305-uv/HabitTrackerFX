@@ -15,12 +15,11 @@ public class GuiMain {
         if (tracker.getHabits().isEmpty()) {
             tracker.addHabit("Code in Java");
             tracker.addHabit("Drink Water");
-            tracker.addHabit("Exercise");
         }
 
-        JFrame frame = new JFrame("HabitTrackerFX - Ultimate System");
+        JFrame frame = new JFrame("HabitTrackerFX - Hall of Fame Edition");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(450, 600);
+        frame.setSize(500, 600); // Wider for the new stats
         frame.setLayout(new BorderLayout());
 
         // HEADER
@@ -29,7 +28,7 @@ public class GuiMain {
         headerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         headerPanel.setBackground(new Color(40, 44, 52));
 
-        JLabel titleLabel = new JLabel("HABIT SYSTEM");
+        JLabel titleLabel = new JLabel("HABIT MASTERY");
         titleLabel.setForeground(new Color(97, 218, 251));
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 26));
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -67,40 +66,38 @@ public class GuiMain {
             if (isDoneToday) completedCount++;
 
             JPanel row = new JPanel(new BorderLayout());
-            row.setMaximumSize(new Dimension(400, 40));
+            row.setMaximumSize(new Dimension(460, 50)); // Taller row
+            row.setBorder(BorderFactory.createMatteBorder(0,0,1,0, Color.LIGHT_GRAY));
 
             JCheckBox checkBox = new JCheckBox(h.getName());
             checkBox.setSelected(isDoneToday);
             checkBox.setFont(new Font("Segoe UI", Font.PLAIN, 18));
             checkBox.setFocusable(false);
 
-            // Dynamic Streak Display
-            int streak = h.getStreak();
-            JLabel streakLabel = new JLabel("STREAK: " + streak + " ");
-            streakLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
-            
-            if (streak >= 10) {
-                streakLabel.setForeground(Color.RED);
-                streakLabel.setText("MASTER: " + streak + " ");
-            } else if (streak >= 3) {
-                streakLabel.setForeground(Color.ORANGE);
-            } else {
-                streakLabel.setForeground(Color.GRAY);
-            }
+            // --- THE NEW HALL OF FAME DISPLAY ---
+            int current = h.getStreak();
+            int best = h.getBestStreak();
 
-            // ACTION: Uses the new setStatus with Today's Date
+            // Logic: If current streak IS the best, show it in Gold
+            String text = "<html>Current: <b>" + current + "</b><br>" + 
+                          "<font color='gray'>Best: " + best + "</font></html>";
+            
+            JLabel statsLabel = new JLabel(text);
+            statsLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            statsLabel.setHorizontalAlignment(SwingConstants.RIGHT);
+
+            // Action
             checkBox.addActionListener(e -> {
                 h.setStatus(today, checkBox.isSelected());
                 if (checkBox.isSelected()) Toolkit.getDefaultToolkit().beep();
-                
                 tracker.saveData();
                 refreshUI();
             });
 
             row.add(checkBox, BorderLayout.CENTER);
-            row.add(streakLabel, BorderLayout.EAST);
+            row.add(statsLabel, BorderLayout.EAST);
             listPanel.add(row);
-            listPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+            listPanel.add(Box.createRigidArea(new Dimension(0, 10)));
         }
 
         int percent = (habits.isEmpty()) ? 0 : (int)((double)completedCount / habits.size() * 100);

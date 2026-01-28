@@ -2,22 +2,18 @@
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class Habit {
     private String name;
     private LocalDate startDate;
-    // The Core Data Structure: Linking Dates to Status
-    private Map<LocalDate, Boolean> history;
+    private Map<LocalDate, Boolean> history; // The Database
 
-    // Constructor 1: New Habit
     public Habit(String name) {
         this.name = name;
         this.startDate = LocalDate.now();
         this.history = new HashMap<>();
     }
 
-    // Constructor 2: Loading from File
     public Habit(String name, LocalDate startDate) {
         this.name = name;
         this.startDate = startDate;
@@ -25,11 +21,8 @@ public class Habit {
     }
 
     public void setStatus(LocalDate date, boolean status) {
-        if (status) {
-            history.put(date, true);
-        } else {
-            history.remove(date); // Remove entry if unchecked
-        }
+        if (status) history.put(date, true);
+        else history.remove(date);
     }
 
     public boolean isCompletedOn(LocalDate date) {
@@ -38,13 +31,12 @@ public class Habit {
 
     public String getName() { return name; }
 
-    // DYNAMIC STREAK CALCULATION (The Smart Logic)
-    // It counts backwards from today. If you miss a day, it resets automatically.
+    // 1. CURRENT STREAK (Backwards from Today)
     public int getStreak() {
         int streak = 0;
         LocalDate checkDate = LocalDate.now();
         
-        // If not done today, check if done yesterday to keep streak alive
+        // If not done today, check yesterday
         if (!isCompletedOn(checkDate)) {
             checkDate = checkDate.minusDays(1);
         }
@@ -56,14 +48,47 @@ public class Habit {
         return streak;
     }
 
-    // SERIALIZATION: Convert Object -> String for saving
+    // 2. THE "CHAIN OF CONSISTENCY" (Your C++ Logic Ported)
+    // Scans the entire history to find the Personal Best
+    public int getBestStreak() {
+        if (history.isEmpty()) return 0;
+
+        // Sort dates to create the "Linked List" flow
+        List<LocalDate> dates = new ArrayList<>(history.keySet());
+        Collections.sort(dates);
+
+        int maxStreak = 0;
+        int currentRun = 0;
+        LocalDate previousDate = null;
+
+        for (LocalDate date : dates) {
+            if (previousDate == null) {
+                // First node in the chain
+                currentRun = 1;
+            } else {
+                // Check if this date is exactly 1 day after the previous
+                long gap = ChronoUnit.DAYS.between(previousDate, date);
+                
+                if (gap == 1) {
+                    currentRun++; // Chain continues
+                } else {
+                    currentRun = 1; // Chain broken, reset
+                }
+            }
+            
+            if (currentRun > maxStreak) {
+                maxStreak = currentRun;
+            }
+            previousDate = date;
+        }
+        return maxStreak;
+    }
+
     public String toDataString() {
         StringBuilder sb = new StringBuilder();
         sb.append(name).append(";").append(startDate).append(";");
-        
         List<LocalDate> sortedDates = new ArrayList<>(history.keySet());
         Collections.sort(sortedDates);
-
         for (int i = 0; i < sortedDates.size(); i++) {
             sb.append(sortedDates.get(i));
             if (i < sortedDates.size() - 1) sb.append(",");

@@ -1,3 +1,4 @@
+![HabitTracker Preview](preview.png)
 \# ⚡ HabitTrackerFX - Ultimate Edition
 
 

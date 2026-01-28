@@ -1,7 +1,7 @@
 // src/HabitTracker.java
 import java.util.ArrayList;
 import java.util.List;
-import java.io.*; // Import the tools to read/write files
+import java.io.*;
 import java.util.Scanner;
 
 public class HabitTracker {
@@ -10,7 +10,7 @@ public class HabitTracker {
 
     public HabitTracker() {
         this.habits = new ArrayList<>();
-        loadData(); // Load data as soon as the tracker starts!
+        loadData();
     }
 
     public void addHabit(String name) {
@@ -21,36 +21,42 @@ public class HabitTracker {
         return habits;
     }
 
-    // 1. SAVE: Write the list to a text file
     public void saveData() {
         try (PrintWriter writer = new PrintWriter(new FileWriter(FILE_NAME))) {
             for (Habit h : habits) {
-                // Format: Name,IsCompleted (e.g., "Code Java,true")
-                writer.println(h.getName() + "," + h.isCompleted());
+                // Format: Name,IsCompleted,Streak
+                writer.println(h.getName() + "," + h.isCompleted() + "," + h.getStreak());
             }
         } catch (IOException e) {
-            System.out.println("Error saving data: " + e.getMessage());
+            System.out.println("Error saving: " + e.getMessage());
         }
     }
 
-    // 2. LOAD: Read the list from the text file
     private void loadData() {
         File file = new File(FILE_NAME);
-        if (!file.exists()) return; // If no file exists yet, do nothing
+        if (!file.exists()) return;
 
         try (Scanner scanner = new Scanner(file)) {
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
-                String[] parts = line.split(","); // Split "Code Java,true"
+                String[] parts = line.split(","); 
                 
-                String name = parts[0];
-                boolean isDone = Boolean.parseBoolean(parts[1]);
-
-                Habit h = new Habit(name);
-                if (isDone) h.markComplete();
-                habits.add(h);
+                if (parts.length >= 2) {
+                    String name = parts[0];
+                    boolean isDone = Boolean.parseBoolean(parts[1]);
+                    
+                    Habit h = new Habit(name);
+                    if (isDone) h.markComplete(); // Sets isCompleted=true
+                    
+                    // NEW: Load streak if available (Backward compatibility)
+                    if (parts.length >= 3) {
+                        h.setStreak(Integer.parseInt(parts[2]));
+                    }
+                    
+                    habits.add(h);
+                }
             }
-        } catch (FileNotFoundException e) {
+        } catch (Exception e) {
             System.out.println("Error loading data.");
         }
     }

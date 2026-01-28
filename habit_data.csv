@@ -1,5 +1,5 @@
-Code in Java,true
-Drink Water,true
-Exercise,true
-Read 10 Pages,true
-Sleep 8 Hours,true
+Code in Java,true,1
+Drink Water,true,1
+Exercise,false,0
+Read 10 Pages,false,0
+Sleep 8 Hours,true,1

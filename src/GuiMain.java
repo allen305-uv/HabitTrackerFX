@@ -1,103 +1,111 @@
 // src/GuiMain.java
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 
 public class GuiMain {
+    static HabitTracker tracker;
+    static JPanel listPanel;
+    static JProgressBar progressBar;
+
     public static void main(String[] args) {
-        // 1. Create the Backend Engine
-        HabitTracker tracker = new HabitTracker();
-        
-        // If empty, add defaults
+        tracker = new HabitTracker();
+        // Default habits if empty
         if (tracker.getHabits().isEmpty()) {
             tracker.addHabit("Code in Java");
             tracker.addHabit("Drink Water");
             tracker.addHabit("Exercise");
         }
 
-        // 2. Create the Main Window (JFrame)
-        JFrame frame = new JFrame("HabitTrackerFX v1.0");
+        JFrame frame = new JFrame("HabitTrackerFX - Ultimate Edition");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(400, 500);
+        frame.setSize(450, 600);
         frame.setLayout(new BorderLayout());
 
-        // 3. Create the Header Panel (Title + Progress Bar)
+        // HEADER
         JPanel headerPanel = new JPanel();
         headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        headerPanel.setBackground(new Color(50, 50, 50)); // Dark Gray
+        headerPanel.setBackground(new Color(40, 44, 52));
 
-        JLabel titleLabel = new JLabel("MY HABITS");
-        titleLabel.setForeground(Color.WHITE);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        JLabel titleLabel = new JLabel("ULTIMATE TRACKER");
+        titleLabel.setForeground(new Color(97, 218, 251));
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 26));
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
-        JProgressBar progressBar = new JProgressBar(0, 100);
+        progressBar = new JProgressBar(0, 100);
         progressBar.setStringPainted(true);
-        progressBar.setForeground(new Color(0, 200, 0)); // Matrix Green
+        progressBar.setForeground(new Color(152, 195, 121));
+        progressBar.setBackground(new Color(60, 60, 60));
+        progressBar.setBorderPainted(false);
         
         headerPanel.add(titleLabel);
-        headerPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        headerPanel.add(Box.createRigidArea(new Dimension(0, 15)));
         headerPanel.add(progressBar);
-        
         frame.add(headerPanel, BorderLayout.NORTH);
 
-        // 4. Create the Habit List Panel
-        JPanel listPanel = new JPanel();
+        // LIST
+        listPanel = new JPanel();
         listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
         listPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-        List<Habit> habits = tracker.getHabits();
         
-        // This helper function updates the bar whenever a box is clicked
-        Runnable updateBar = () -> {
-            int completed = 0;
-            for (Habit h : habits) {
-                if (h.isCompleted()) completed++;
-            }
-            int percent = (int)((double)completed / habits.size() * 100);
-            progressBar.setValue(percent);
-        };
+        refreshUI();
 
-        // Create a Checkbox for each habit
+        frame.add(new JScrollPane(listPanel), BorderLayout.CENTER);
+        frame.setVisible(true);
+    }
+
+    public static void refreshUI() {
+        listPanel.removeAll();
+        List<Habit> habits = tracker.getHabits();
+        int completed = 0;
+
         for (Habit h : habits) {
+            if (h.isCompleted()) completed++;
+
+            JPanel row = new JPanel(new BorderLayout());
+            row.setMaximumSize(new Dimension(400, 40));
+
             JCheckBox checkBox = new JCheckBox(h.getName());
             checkBox.setSelected(h.isCompleted());
-            checkBox.setFont(new Font("Arial", Font.PLAIN, 18));
+            checkBox.setFont(new Font("Segoe UI", Font.PLAIN, 18));
             checkBox.setFocusable(false);
+
+            // --- THE GAMIFICATION LOGIC ---
+            // Instead of an Emoji, we use standard text
+            JLabel streakLabel = new JLabel("STREAK: " + h.getStreak() + " ");
+            streakLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
             
-            // What happens when you click it?
+            // Dynamic Coloring (The "Heat Map")
+            if (h.getStreak() >= 10) {
+                streakLabel.setForeground(Color.RED);     // ON FIRE
+                streakLabel.setText("MASTER: " + h.getStreak() + " ");
+            } else if (h.getStreak() >= 3) {
+                streakLabel.setForeground(Color.ORANGE);  // Warming Up
+            } else {
+                streakLabel.setForeground(Color.GRAY);    // Cold
+            }
+
             checkBox.addActionListener(e -> {
-                if (checkBox.isSelected()) h.markComplete();
-                else h.reset();
-                updateBar.run(); // Refresh bar
+                if (checkBox.isSelected()) {
+                    h.markComplete();
+                    Toolkit.getDefaultToolkit().beep();
+                } else {
+                    h.reset();
+                }
+                tracker.saveData();
+                refreshUI();
             });
-            
-            listPanel.add(checkBox);
-            listPanel.add(Box.createRigidArea(new Dimension(0, 10))); // Spacing
+
+            row.add(checkBox, BorderLayout.CENTER);
+            row.add(streakLabel, BorderLayout.EAST);
+            listPanel.add(row);
+            listPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         }
-        
-        frame.add(new JScrollPane(listPanel), BorderLayout.CENTER);
 
-        // 5. Create the Save Button
-        JButton saveButton = new JButton("SAVE PROGRESS");
-        saveButton.setFont(new Font("Arial", Font.BOLD, 16));
-        saveButton.setBackground(new Color(50, 50, 50));
-        saveButton.setForeground(Color.WHITE);
-        
-        saveButton.addActionListener(e -> {
-            tracker.saveData();
-            JOptionPane.showMessageDialog(frame, "Progress Saved Successfully!");
-        });
-        
-        frame.add(saveButton, BorderLayout.SOUTH);
-
-        // Initial Progress Calculation
-        updateBar.run();
-
-        // Show the window
-        frame.setVisible(true);
+        int percent = (habits.isEmpty()) ? 0 : (int)((double)completed / habits.size() * 100);
+        progressBar.setValue(percent);
+        listPanel.revalidate();
+        listPanel.repaint();
     }
 }

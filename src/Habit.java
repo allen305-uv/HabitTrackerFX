@@ -1,31 +1,35 @@
 // src/Habit.java
-
 public class Habit {
-    // 1. Properties: The data this object holds
     private String name;
     private boolean isCompleted;
+    private int streak; // NEW: Tracks your momentum
 
-    // 2. Constructor: How to build a new habit
     public Habit(String name) {
         this.name = name;
-        this.isCompleted = false; // Default: Not done yet
+        this.isCompleted = false;
+        this.streak = 0;
     }
 
-    // 3. Methods: What this object can DO
     public void markComplete() {
-        this.isCompleted = true;
+        if (!isCompleted) { // Only increment if not already marked today
+            this.isCompleted = true;
+            this.streak++;
+        }
     }
 
     public void reset() {
-        this.isCompleted = false;
+        if (isCompleted) { // Only decrement if it was marked today
+            this.isCompleted = false;
+            if (this.streak > 0) this.streak--;
+        }
+    }
+    
+    // Allow manual setting of streaks (for loading from file)
+    public void setStreak(int s) {
+        this.streak = s;
     }
 
-    // 4. Getters: Allowing other parts of the system to read the data
-    public String getName() {
-        return name;
-    }
-
-    public boolean isCompleted() {
-        return isCompleted;
-    }
+    public String getName() { return name; }
+    public boolean isCompleted() { return isCompleted; }
+    public int getStreak() { return streak; }
 }

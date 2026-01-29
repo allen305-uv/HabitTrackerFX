@@ -2,10 +2,10 @@
 import javax.swing.*;
 import java.awt.*;
 import java.time.LocalDate;
+import java.time.DayOfWeek; // <--- The missing piece!
 import java.util.List;
 
 public class GuiMain {
-    // SHARED VARIABLES
     static HabitTracker tracker;
     static JPanel listPanel;
     static JProgressBar progressBar;
@@ -13,35 +13,41 @@ public class GuiMain {
     public static void main(String[] args) {
         tracker = new HabitTracker();
         
-        // Add defaults if empty
-        if (tracker.getHabits().isEmpty()) {
-            tracker.addHabit("Code in Java");
-            tracker.addHabit("Drink Water");
-        }
-
-        JFrame frame = new JFrame("HabitTrackerFX - Visual Chain Edition");
+        JFrame frame = new JFrame("HabitTrackerFX - Professional Edition");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(550, 600); // Slightly wider for the chain
+        frame.setSize(600, 700); 
         frame.setLayout(new BorderLayout());
 
         // --- HEADER ---
         JPanel headerPanel = new JPanel();
         headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
         headerPanel.setBackground(new Color(40, 44, 52));
 
-        JLabel titleLabel = new JLabel("HABIT FLOW");
+        JLabel titleLabel = new JLabel("HABIT MASTERY");
         titleLabel.setForeground(new Color(97, 218, 251));
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 26));
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         
+        // TEST DATA BUTTON
+        JButton mockBtn = new JButton("Inject Test Data");
+        mockBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        mockBtn.setFocusable(false);
+        mockBtn.addActionListener(e -> {
+            injectTestData();
+            refreshUI();
+            JOptionPane.showMessageDialog(frame, "Test data injected! Click the Graph button to see it.");
+        });
+
         progressBar = new JProgressBar(0, 100);
         progressBar.setStringPainted(true);
-        progressBar.setForeground(new Color(152, 195, 121));
-        progressBar.setBackground(new Color(60, 60, 60));
+        progressBar.setForeground(new Color(152, 195, 121)); 
+        progressBar.setBackground(new Color(60, 60, 60));    
         progressBar.setBorderPainted(false);
         
         headerPanel.add(titleLabel);
+        headerPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        headerPanel.add(mockBtn);
         headerPanel.add(Box.createRigidArea(new Dimension(0, 15)));
         headerPanel.add(progressBar);
         frame.add(headerPanel, BorderLayout.NORTH);
@@ -49,7 +55,7 @@ public class GuiMain {
         // --- LIST ---
         listPanel = new JPanel();
         listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
-        listPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        listPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
         refreshUI();
 
@@ -57,7 +63,6 @@ public class GuiMain {
         frame.setVisible(true);
     }
 
-    // --- THE VISUAL CHAIN LOGIC ---
     public static void refreshUI() {
         listPanel.removeAll();
         List<Habit> habits = tracker.getHabits();
@@ -68,44 +73,51 @@ public class GuiMain {
             boolean isDoneToday = h.isCompletedOn(today);
             if (isDoneToday) completedCount++;
 
-            JPanel row = new JPanel(new BorderLayout());
-            row.setMaximumSize(new Dimension(500, 50));
-            row.setBorder(BorderFactory.createMatteBorder(0,0,1,0, Color.LIGHT_GRAY));
+            JPanel row = new JPanel(new BorderLayout(10, 0));
+            row.setMaximumSize(new Dimension(550, 55));
+            row.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0,0,1,0, Color.LIGHT_GRAY),
+                BorderFactory.createEmptyBorder(5, 5, 5, 5)
+            ));
 
-            // 1. Checkbox
+            // 1. LEFT: CHECKBOX
             JCheckBox checkBox = new JCheckBox(h.getName());
             checkBox.setSelected(isDoneToday);
             checkBox.setFont(new Font("Segoe UI", Font.PLAIN, 18));
             checkBox.setFocusable(false);
 
-            // 2. The Visual Chain (HTML Rendering)
+            // 2. CENTER: VISUAL CHAIN
             boolean[] history = h.getLast5Days();
             StringBuilder htmlChain = new StringBuilder("<html>");
-            
             for (boolean day : history) {
-                if (day) {
-                    // Green Box
-                    htmlChain.append("<font color='#4CAF50' size='5'>■ </font>");
-                } else {
-                    // Gray Box
-                    htmlChain.append("<font color='#CCCCCC' size='5'>□ </font>");
-                }
+                if (day) htmlChain.append("<font color='#4CAF50' size='5'>■ </font>");
+                else htmlChain.append("<font color='#CCCCCC' size='5'>□ </font>");
             }
             htmlChain.append("</html>");
-            
             JLabel chainLabel = new JLabel(htmlChain.toString());
             chainLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
-            // 3. Stats (Current & Best)
+            // 3. RIGHT: STATS + HEATMAP BUTTON
+            JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 0));
+            
+            // Stats Text
             int current = h.getStreak();
             int best = h.getBestStreak();
             String statsText = "<html><div style='text-align: right;'>Curr: <b>" + current + "</b><br>" + 
                           "<font color='gray'>Best: " + best + "</font></div></html>";
-            
             JLabel statsLabel = new JLabel(statsText);
             statsLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
 
-            // Logic
+            // THE GRAPH BUTTON
+            JButton mapBtn = new JButton("📊");
+            mapBtn.setToolTipText("View 4-Week Visual Heatmap");
+            mapBtn.setFocusable(false);
+            mapBtn.setPreferredSize(new Dimension(40, 30));
+            mapBtn.addActionListener(e -> {
+                GuiHeatmap.show(h);
+            });
+
+            // Action: Checkbox Click
             checkBox.addActionListener(e -> {
                 h.setStatus(today, checkBox.isSelected());
                 if (checkBox.isSelected()) Toolkit.getDefaultToolkit().beep();
@@ -113,17 +125,42 @@ public class GuiMain {
                 refreshUI();
             });
 
+            rightPanel.add(statsLabel);
+            rightPanel.add(mapBtn);
+
             row.add(checkBox, BorderLayout.WEST);
             row.add(chainLabel, BorderLayout.CENTER);
-            row.add(statsLabel, BorderLayout.EAST);
+            row.add(rightPanel, BorderLayout.EAST);
             
             listPanel.add(row);
-            listPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+            listPanel.add(Box.createRigidArea(new Dimension(0, 5)));
         }
 
         int percent = (habits.isEmpty()) ? 0 : (int)((double)completedCount / habits.size() * 100);
         progressBar.setValue(percent);
         listPanel.revalidate();
         listPanel.repaint();
+    }
+
+    // Helper to add fake data for testing
+    private static void injectTestData() {
+        if (tracker.getHabits().isEmpty()) {
+            tracker.addHabit("Code in Java");
+            tracker.addHabit("Exercise");
+        }
+        
+        LocalDate today = LocalDate.now();
+        Habit h = tracker.getHabits().get(0);
+        
+        // Create a pattern for the last 30 days
+        for (int i = 0; i < 30; i++) {
+            LocalDate d = today.minusDays(i);
+            DayOfWeek day = d.getDayOfWeek();
+            // Mark true if NOT Saturday/Sunday
+            if (day != DayOfWeek.SATURDAY && day != DayOfWeek.SUNDAY) {
+                h.setStatus(d, true);
+            }
+        }
+        tracker.saveData();
     }
 }

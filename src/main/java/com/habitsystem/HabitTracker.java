@@ -1,20 +1,21 @@
-// src/HabitTracker.java
+package com.habitsystem;
+
 import java.io.*;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class HabitTracker {
     private List<Habit> habits;
-    private static final String FILE_NAME = "habit_data.csv";
+    private final String FILE_NAME = "habit_data.csv";
 
     public HabitTracker() {
-        this.habits = new ArrayList<>();
-        loadData(); // Auto-load on startup
+        habits = new ArrayList<>();
+        loadData();
     }
 
     public void addHabit(String name) {
         habits.add(new Habit(name));
+        saveData();
     }
 
     public List<Habit> getHabits() {
@@ -27,7 +28,7 @@ public class HabitTracker {
                 writer.println(h.toDataString());
             }
         } catch (IOException e) {
-            System.out.println("Error saving: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -35,31 +36,22 @@ public class HabitTracker {
         File file = new File(FILE_NAME);
         if (!file.exists()) return;
 
-        habits.clear(); 
-
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(";");
-                
-                if (parts.length >= 2) {
-                    String name = parts[0];
-                    LocalDate startDate = LocalDate.parse(parts[1]);
-
-                    Habit h = new Habit(name, startDate);
-
-                    // Load History if exists
-                    if (parts.length > 2 && !parts[2].isEmpty()) {
-                        String[] dates = parts[2].split(",");
-                        for (String dateStr : dates) {
-                            h.setStatus(LocalDate.parse(dateStr), true);
-                        }
+                if (parts.length < 2) continue;
+                Habit h = new Habit(parts[0], LocalDate.parse(parts[1]));
+                if (parts.length > 2 && !parts[2].isEmpty()) {
+                    String[] dates = parts[2].split(",");
+                    for (String d : dates) {
+                        h.setStatus(LocalDate.parse(d), true);
                     }
-                    habits.add(h);
                 }
+                habits.add(h);
             }
         } catch (IOException e) {
-            System.out.println("Error loading data.");
+            e.printStackTrace();
         }
     }
 }

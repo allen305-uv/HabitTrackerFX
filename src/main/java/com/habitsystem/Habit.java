@@ -1,4 +1,5 @@
-// src/Habit.java
+package com.habitsystem;
+
 import java.time.LocalDate;
 import java.time.DayOfWeek;
 import java.time.temporal.ChronoUnit;
@@ -32,8 +33,6 @@ public class Habit {
 
     public String getName() { return name; }
 
-    // --- ANALYTICS ---
-
     public int getStreak() {
         int streak = 0;
         LocalDate checkDate = LocalDate.now();
@@ -45,51 +44,21 @@ public class Habit {
         return streak;
     }
 
-    public int getBestStreak() {
-        if (history.isEmpty()) return 0;
-        List<LocalDate> dates = new ArrayList<>(history.keySet());
-        Collections.sort(dates);
-        int max = 0, current = 0;
-        LocalDate prev = null;
-        for (LocalDate d : dates) {
-            if (prev != null && ChronoUnit.DAYS.between(prev, d) == 1) current++;
-            else current = 1;
-            if (current > max) max = current;
-            prev = d;
-        }
-        return max;
-    }
-
-    // --- THE FIX: 4-WEEK MOMENTUM MATRIX ---
     public boolean[][] get4WeekMomentum() {
         boolean[][] matrix = new boolean[4][7];
-        
-        // Find the Monday of the week 3 weeks ago
         LocalDate today = LocalDate.now();
         LocalDate startPoint = today.minusWeeks(3);
         while (startPoint.getDayOfWeek() != DayOfWeek.MONDAY) {
             startPoint = startPoint.minusDays(1);
         }
-
         LocalDate cursor = startPoint;
         for (int w = 0; w < 4; w++) {
             for (int d = 0; d < 7; d++) {
-                if (isCompletedOn(cursor)) {
-                    matrix[w][d] = true;
-                }
+                if (isCompletedOn(cursor)) matrix[w][d] = true;
                 cursor = cursor.plusDays(1);
             }
         }
         return matrix;
-    }
-
-    public boolean[] getLast5Days() {
-        boolean[] results = new boolean[5];
-        LocalDate today = LocalDate.now();
-        for (int i = 0; i < 5; i++) {
-            results[4 - i] = isCompletedOn(today.minusDays(i));
-        }
-        return results;
     }
 
     public String toDataString() {
